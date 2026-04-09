@@ -4,6 +4,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+// @ts-ignore
 import { formatDate, getDisplayDate, handleDeleteRange, handlePrintRange } from '../utils/actions';
 
 const initialCategories = ['Juice', 'Staff', 'Bakery', 'Stationery', 'Kitchen', 'Puffs', 'Others'];
@@ -11,10 +12,10 @@ const initialCategories = ['Juice', 'Staff', 'Bakery', 'Stationery', 'Kitchen', 
 export default function OutgoingScreen() {
   const db = useSQLiteContext(); 
 
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState<string[]>(initialCategories);
   const [newCategoryName, setNewCategoryName] = useState('');
   const defaultExpenses = initialCategories.reduce((acc, cat) => ({ ...acc, [cat]: [] }), {});
-  const [expenses, setExpenses] = useState(defaultExpenses);
+  const [expenses, setExpenses] = useState<Record<string, any[]>>(defaultExpenses);
 
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
@@ -25,20 +26,19 @@ export default function OutgoingScreen() {
   const toDateStr = formatDate(toDate);
   const isSingleDate = fromDateStr === toDateStr;
   
-  const [dashboardStats, setDashboardStats] = useState({});
+  const [dashboardStats, setDashboardStats] = useState<Record<string, any>>({});
   const [totalSpent, setTotalSpent] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const loadAllData = useCallback(async () => {
     try {
-      // 🛡️ Safe Object Binding
-      const rawResults = await db.getAllAsync(
-        'SELECT date, category, item_name, amount FROM expenses WHERE date >= $fromDate AND date <= $toDate ORDER BY date DESC', 
-        { $fromDate: fromDateStr, $toDate: toDateStr }
+      const rawResults = await db.getAllAsync<any>(
+        'SELECT date, category, item_name, amount FROM expenses WHERE date >= ? AND date <= ? ORDER BY date DESC', 
+        fromDateStr || '', toDateStr || ''
       );
 
       let grandTotal = 0;
-      const groupedData = {};
+      const groupedData: Record<string, any> = {};
 
       rawResults.forEach(row => {
         grandTotal += row.amount;
@@ -51,12 +51,11 @@ export default function OutgoingScreen() {
       setTotalSpent(grandTotal);
 
       if (isSingleDate) {
-        // 🛡️ Safe Object Binding
-        const results = await db.getAllAsync(
-          'SELECT category, item_name, amount FROM expenses WHERE date = $date', 
-          { $date: fromDateStr }
+        const results = await db.getAllAsync<any>(
+          'SELECT category, item_name, amount FROM expenses WHERE date = ?', 
+          fromDateStr || ''
         );
-        const loadedExpenses = initialCategories.reduce((acc, cat) => ({ ...acc, [cat]: [] }), {});
+        const loadedExpenses: Record<string, any[]> = initialCategories.reduce((acc, cat) => ({ ...acc, [cat]: [] }), {});
         const loadedCategories = [...initialCategories];
 
         results.forEach(row => {
@@ -76,8 +75,9 @@ export default function OutgoingScreen() {
   useEffect(() => { loadAllData(); }, [loadAllData]);
   useFocusEffect(useCallback(() => { loadAllData(); }, [loadAllData]));
 
-  const handleAddItem = (category) => setExpenses(prev => ({ ...prev, [category]: [...prev[category], { name: '', amount: '' }] }));
-  const handleUpdateItem = (category, index, field, value) => {
+  const handleAddItem = (category: string) => setExpenses(prev => ({ ...prev, [category]: [...prev[category], { name: '', amount: '' }] }));
+  
+  const handleUpdateItem = (category: string, index: number, field: string, value: string) => {
     const updated = [...expenses[category]];
     updated[index][field] = value;
     setExpenses(prev => ({ ...prev, [category]: updated }));
@@ -85,15 +85,16 @@ export default function OutgoingScreen() {
   
   const handleAddCategory = () => {
     if (newCategoryName.trim() !== '') {
-      setCategories([...categories, newCategoryName]); setExpenses(prev => ({ ...prev, [newCategoryName]: [] })); setNewCategoryName('');
+      setCategories([...categories, newCategoryName]); 
+      setExpenses(prev => ({ ...prev, [newCategoryName]: [] })); 
+      setNewCategoryName('');
     }
   };
 
   const handleSave = async () => {
     if (!isSingleDate) return; 
     try {
-      // 🛡️ Safe Object Binding
-      await db.runAsync('DELETE FROM expenses WHERE date = $date', { $date: fromDateStr });
+      await db.runAsync('DELETE FROM expenses WHERE date = ?', fromDateStr || '');
       
       let itemsSaved = 0;
       for (const cat of categories) {
@@ -102,10 +103,9 @@ export default function OutgoingScreen() {
           const amount = Number(item.amount) || 0;
           const name = item.name || '';
           if (name && amount > 0) {
-            // 🛡️ Safe Object Binding - Fixes the multiple parameter Crash!
             await db.runAsync(
-              'INSERT INTO expenses (date, category, item_name, amount) VALUES ($date, $cat, $name, $amount)', 
-              { $date: fromDateStr, $cat: cat, $name: name, $amount: amount }
+              'INSERT INTO expenses (date, category, item_name, amount) VALUES (?, ?, ?, ?)', 
+              fromDateStr || '', cat || '', name || '', amount
             );
             itemsSaved++;
           }
@@ -113,7 +113,7 @@ export default function OutgoingScreen() {
       }
       Alert.alert("Success! 💸", `Saved ${itemsSaved} items for ${getDisplayDate(fromDateStr)}.`);
       await loadAllData(); 
-    } catch (error) { Alert.alert("System Error", String(error.message || error)); }
+    } catch (error: any) { Alert.alert("System Error", String(error?.message || error)); }
   };
 
   return (
@@ -128,10 +128,9 @@ export default function OutgoingScreen() {
             <View style={styles.dateBox}>
               <Text style={styles.dateLabel}>From</Text>
               <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowFromPicker(true)}><Text style={styles.datePickerText}>{getDisplayDate(fromDateStr)}</Text></TouchableOpacity>
-              {showFromPicker && <DateTimePicker value={fromDate} mode="date" display="default" onChange={(e, d) => { setShowFromPicker(false); if (d) setFromDate(d); }} />}
+              {showFromPicker && <DateTimePicker value={fromDate} mode="date" display="default" onChange={(e: any, d?: Date) => { setShowFromPicker(false); if (d) setFromDate(d); }} />}
             </View>
 
-            {/* 🛡️ PRINT ICON PLACED IN THE MIDDLE */}
             <TouchableOpacity style={styles.printBtn} onPress={() => handlePrintRange('expenses', fromDateStr, toDateStr, dashboardStats, totalSpent)}>
               <Ionicons name="print-outline" size={24} color="#4dabf7" />
             </TouchableOpacity>
@@ -139,7 +138,7 @@ export default function OutgoingScreen() {
             <View style={styles.dateBox}>
               <Text style={styles.dateLabel}>To</Text>
               <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowToPicker(true)}><Text style={styles.datePickerText}>{getDisplayDate(toDateStr)}</Text></TouchableOpacity>
-              {showToPicker && <DateTimePicker value={toDate} mode="date" display="default" onChange={(e, d) => { setShowToPicker(false); if (d) setToDate(d); }} />}
+              {showToPicker && <DateTimePicker value={toDate} mode="date" display="default" onChange={(e: any, d?: Date) => { setShowToPicker(false); if (d) setToDate(d); }} />}
             </View>
           </View>
 
@@ -154,7 +153,7 @@ export default function OutgoingScreen() {
                 Object.keys(dashboardStats).map((cat, index) => (
                   <View key={index} style={styles.expandedCategoryBlock}>
                     <View style={styles.expandedCategoryHeader}><Text style={styles.statCategory}>{cat}</Text><Text style={styles.statAmount}>₹{dashboardStats[cat].total}</Text></View>
-                    {dashboardStats[cat].items.map((item, i) => (
+                    {dashboardStats[cat].items.map((item: any, i: number) => (
                       <View key={i} style={styles.expandedItemRow}>
                         <Text style={styles.expandedItemName}>• {item.name} {(!isSingleDate) && <Text style={styles.dateTag}> ({getDisplayDate(item.date)})</Text>}</Text>
                         <Text style={styles.expandedItemAmount}>₹{item.amount}</Text>
@@ -212,7 +211,7 @@ export default function OutgoingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5', padding: 15 },
   dashboard: { backgroundColor: '#343a40', padding: 15, borderRadius: 10, marginBottom: 20 },
-  dateFilterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10, alignItems: 'center' },
+  dateFilterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10, alignItems: 'center' as any },
   dateBox: { flex: 1, marginHorizontal: 5 },
   dateLabel: { color: '#adb5bd', fontSize: 12, marginBottom: 5 },
   datePickerBtn: { backgroundColor: '#495057', borderRadius: 5, padding: 10, alignItems: 'center' },

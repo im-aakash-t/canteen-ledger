@@ -4,19 +4,22 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+// @ts-ignore
 import { formatDate, getDisplayDate, handleDeleteRange, handlePrintRange } from '../utils/actions';
 
-const categories = ['Bakery', 'Stationery', 'Counter'];
-const defaultState = {
+// 🛡️ UPDATED: Added Counter 2
+const categories = ['Bakery', 'Stationery', 'Counter', 'Counter 2'];
+const defaultState: Record<string, any> = {
   Bakery: { cash: '', gpay: '', bank_withdrawn: '' },
   Stationery: { cash: '', gpay: '', bank_withdrawn: '' },
-  Counter: { cash: '', gpay: '', bank_withdrawn: '' }
+  Counter: { cash: '', gpay: '', bank_withdrawn: '' },
+  'Counter 2': { cash: '', gpay: '', bank_withdrawn: '' }
 };
 
 export default function IncomingScreen() {
   const db = useSQLiteContext(); 
 
-  const [incomeData, setIncomeData] = useState(defaultState);
+  const [incomeData, setIncomeData] = useState<Record<string, any>>(defaultState);
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -26,25 +29,26 @@ export default function IncomingScreen() {
   const toDateStr = formatDate(toDate);
   const isSingleDate = fromDateStr === toDateStr;
 
-  const [expandedCats, setExpandedCats] = useState({ Bakery: false, Stationery: false, Counter: false });
-  const toggleExpand = (cat) => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
+  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({ Bakery: false, Stationery: false, Counter: false, 'Counter 2': false });
+  const toggleExpand = (cat: string) => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
 
   const [grandTotals, setGrandTotals] = useState({ cash: 0, gpay: 0, bank: 0 });
-  const [dashboardStatsRaw, setDashboardStatsRaw] = useState({});
+  const [dashboardStatsRaw, setDashboardStatsRaw] = useState<Record<string, any>>({});
 
   const loadAllData = useCallback(async () => {
     try {
-      // 🛡️ Safe Object Binding
-      const rawResults = await db.getAllAsync(
-        'SELECT date, category, cash, gpay, bank_withdrawn FROM income WHERE date >= $fromDate AND date <= $toDate ORDER BY date DESC',
-        { $fromDate: fromDateStr, $toDate: toDateStr }
+      const rawResults = await db.getAllAsync<any>(
+        'SELECT date, category, cash, gpay, bank_withdrawn FROM income WHERE date >= ? AND date <= ? ORDER BY date DESC',
+        fromDateStr || '', toDateStr || ''
       );
 
       let gCash = 0, gGpay = 0, gBank = 0;
-      const summary = {
+      // 🛡️ UPDATED: Added Counter 2 to summary
+      const summary: Record<string, any> = {
         Bakery: { cash: 0, gpay: 0, bank: 0, items: [] },
         Stationery: { cash: 0, gpay: 0, bank: 0, items: [] },
-        Counter: { cash: 0, gpay: 0, bank: 0, items: [] }
+        Counter: { cash: 0, gpay: 0, bank: 0, items: [] },
+        'Counter 2': { cash: 0, gpay: 0, bank: 0, items: [] }
       };
 
       rawResults.forEach(row => {
@@ -60,10 +64,9 @@ export default function IncomingScreen() {
       setDashboardStatsRaw(summary);
 
       if (isSingleDate) {
-        // 🛡️ Safe Object Binding
-        const results = await db.getAllAsync(
-          'SELECT category, cash, gpay, bank_withdrawn FROM income WHERE date = $date', 
-          { $date: fromDateStr }
+        const results = await db.getAllAsync<any>(
+          'SELECT category, cash, gpay, bank_withdrawn FROM income WHERE date = ?', 
+          fromDateStr || ''
         );
         const newIncomeData = JSON.parse(JSON.stringify(defaultState)); 
         results.forEach(row => {
@@ -83,13 +86,12 @@ export default function IncomingScreen() {
   useEffect(() => { loadAllData(); }, [loadAllData]);
   useFocusEffect(useCallback(() => { loadAllData(); }, [loadAllData]));
 
-  const handleInputChange = (category, field, value) => setIncomeData(prev => ({ ...prev, [category]: { ...prev[category], [field]: value } }));
+  const handleInputChange = (category: string, field: string, value: string) => setIncomeData(prev => ({ ...prev, [category]: { ...prev[category], [field]: value } }));
 
   const handleSave = async () => {
     if (!isSingleDate) return;
     try {
-      // 🛡️ Safe Object Binding
-      await db.runAsync('DELETE FROM income WHERE date = $date', { $date: fromDateStr });
+      await db.runAsync('DELETE FROM income WHERE date = ?', fromDateStr || '');
       
       let savedCount = 0;
       for (const cat of categories) {
@@ -97,17 +99,16 @@ export default function IncomingScreen() {
         const c = Number(cash) || 0; const g = Number(gpay) || 0; const b = Number(bank_withdrawn) || 0;
         
         if (c > 0 || g > 0 || b > 0) {
-          // 🛡️ Safe Object Binding - Fixes the 5-parameter Crash
           await db.runAsync(
-            'INSERT INTO income (date, category, cash, gpay, bank_withdrawn) VALUES ($date, $cat, $cash, $gpay, $bank)', 
-            { $date: fromDateStr, $cat: cat, $cash: c, $gpay: g, $bank: b }
+            'INSERT INTO income (date, category, cash, gpay, bank_withdrawn) VALUES (?, ?, ?, ?, ?)', 
+            fromDateStr || '', cat || '', c, g, b
           );
           savedCount++;
         }
       }
       Alert.alert("Success! 💰", `Saved data for ${getDisplayDate(fromDateStr)}.`);
       await loadAllData(); 
-    } catch (error) { Alert.alert("System Error", String(error.message || error)); }
+    } catch (error: any) { Alert.alert("System Error", String(error?.message || error)); }
   };
 
   return (
@@ -122,7 +123,7 @@ export default function IncomingScreen() {
             <View style={styles.dateBox}>
               <Text style={styles.dateLabel}>From</Text>
               <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowFromPicker(true)}><Text style={styles.datePickerText}>{getDisplayDate(fromDateStr)}</Text></TouchableOpacity>
-              {showFromPicker && <DateTimePicker value={fromDate} mode="date" display="default" onChange={(e, d) => { setShowFromPicker(false); if (d) setFromDate(d); }} />}
+              {showFromPicker && <DateTimePicker value={fromDate} mode="date" display="default" onChange={(e: any, d?: Date) => { setShowFromPicker(false); if (d) setFromDate(d); }} />}
             </View>
 
             <TouchableOpacity style={styles.printBtn} onPress={() => handlePrintRange('income', fromDateStr, toDateStr, dashboardStatsRaw, grandTotals)}>
@@ -132,7 +133,7 @@ export default function IncomingScreen() {
             <View style={styles.dateBox}>
               <Text style={styles.dateLabel}>To</Text>
               <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowToPicker(true)}><Text style={styles.datePickerText}>{getDisplayDate(toDateStr)}</Text></TouchableOpacity>
-              {showToPicker && <DateTimePicker value={toDate} mode="date" display="default" onChange={(e, d) => { setShowToPicker(false); if (d) setToDate(d); }} />}
+              {showToPicker && <DateTimePicker value={toDate} mode="date" display="default" onChange={(e: any, d?: Date) => { setShowToPicker(false); if (d) setToDate(d); }} />}
             </View>
           </View>
 
@@ -154,7 +155,7 @@ export default function IncomingScreen() {
                   <View style={styles.historyContainer}>
                     {(!dashboardStatsRaw[cat] || dashboardStatsRaw[cat].items.length === 0) ? <Text style={styles.noDataText}>No data for these dates.</Text> : (
                       <>
-                        {dashboardStatsRaw[cat].items.map((item, i) => (
+                        {dashboardStatsRaw[cat].items.map((item: any, i: number) => (
                           <View key={i} style={styles.historyRow}>
                             <Text style={styles.historyDate}>{getDisplayDate(item.date)}</Text>
                             <Text style={styles.historyAmt}>C: ₹{item.cash}</Text>
@@ -217,7 +218,7 @@ export default function IncomingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5', padding: 15 },
   dashboard: { backgroundColor: '#343a40', padding: 15, borderRadius: 10, marginBottom: 20 },
-  dateFilterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 15, alignItems: 'center' },
+  dateFilterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 15, alignItems: 'center' as any },
   dateBox: { flex: 1, marginHorizontal: 5 },
   dateLabel: { color: '#adb5bd', fontSize: 12, marginBottom: 5 },
   datePickerBtn: { backgroundColor: '#495057', borderRadius: 5, padding: 10, alignItems: 'center' },

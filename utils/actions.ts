@@ -1,8 +1,7 @@
 import { Alert } from 'react-native';
 import * as Print from 'expo-print';
 
-// 1. Shared Date Formatters
-export const formatDate = (dateObj) => {
+export const formatDate = (dateObj: any): string => {
   try {
     const d = new Date(dateObj);
     if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
@@ -15,15 +14,20 @@ export const formatDate = (dateObj) => {
   }
 };
 
-export const getDisplayDate = (isoDateString) => {
+export const getDisplayDate = (isoDateString: string): string => {
   if (!isoDateString || typeof isoDateString !== 'string') return '';
   const parts = isoDateString.split('-');
   if (parts.length !== 3) return isoDateString;
   return `${parts[2]}-${parts[1]}-${parts[0]}`;
 };
 
-// 2. Shared Delete Logic (🛡️ UPDATED WITH OBJECT BINDING)
-export const handleDeleteRange = (db, tableName, fromDateStr, toDateStr, onSuccessCallback) => {
+export const handleDeleteRange = (
+  db: any, 
+  tableName: string, 
+  fromDateStr: string, 
+  toDateStr: string, 
+  onSuccessCallback?: () => void
+) => {
   Alert.alert(
     "⚠️ Delete Data",
     `Are you sure you want to delete ALL data from ${getDisplayDate(fromDateStr)} to ${getDisplayDate(toDateStr)}?\n\nThis cannot be undone!`,
@@ -44,10 +48,10 @@ export const handleDeleteRange = (db, tableName, fromDateStr, toDateStr, onSucce
                   style: "destructive", 
                   onPress: async () => {
                     try {
-                      // 🛡️ Safe Object Binding
                       await db.runAsync(
-                        `DELETE FROM ${tableName} WHERE date >= $fromDate AND date <= $toDate`, 
-                        { $fromDate: fromDateStr, $toDate: toDateStr }
+                        `DELETE FROM ${tableName} WHERE date >= ? AND date <= ?`, 
+                        fromDateStr || '', 
+                        toDateStr || ''
                       );
                       Alert.alert("Deleted 🗑️", "Data cleared successfully.");
                       if (onSuccessCallback) onSuccessCallback(); 
@@ -65,8 +69,13 @@ export const handleDeleteRange = (db, tableName, fromDateStr, toDateStr, onSucce
   );
 };
 
-// 3. Shared PDF Print Logic
-export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardStats, totals) => {
+export const handlePrintRange = async (
+  type: string, 
+  fromDateStr: string, 
+  toDateStr: string, 
+  dashboardStats: Record<string, any>, 
+  totals: any
+) => {
   try {
     let tableRows = '';
     let tableHeader = '';
@@ -74,14 +83,16 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
     const isIncome = type === 'income';
 
     if (isIncome) {
-      const datesMap = {};
+      const datesMap: Record<string, any> = {};
       Object.keys(dashboardStats).forEach(cat => {
-        dashboardStats[cat].items.forEach(item => {
+        dashboardStats[cat].items.forEach((item: any) => {
           if (!datesMap[item.date]) {
+            // 🛡️ UPDATED: Added Counter 2
             datesMap[item.date] = {
               Bakery: { cash: 0, gpay: 0, bank: 0 },
               Stationery: { cash: 0, gpay: 0, bank: 0 },
-              Counter: { cash: 0, gpay: 0, bank: 0 }
+              Counter: { cash: 0, gpay: 0, bank: 0 },
+              'Counter 2': { cash: 0, gpay: 0, bank: 0 }
             };
           }
           datesMap[item.date][cat].cash += item.cash || 0;
@@ -97,6 +108,7 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
         const balB = d.Bakery.gpay - d.Bakery.bank;
         const balS = d.Stationery.gpay - d.Stationery.bank;
         const balC = d.Counter.gpay - d.Counter.bank;
+        const balC2 = d['Counter 2'].gpay - d['Counter 2'].bank; // 🛡️ New calc
 
         tableRows += `
           <tr>
@@ -104,11 +116,12 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
             <td>₹${d.Bakery.cash}</td><td>₹${d.Bakery.gpay}</td><td>₹${d.Bakery.bank}</td><td class="bal-col">₹${balB}</td>
             <td>₹${d.Stationery.cash}</td><td>₹${d.Stationery.gpay}</td><td>₹${d.Stationery.bank}</td><td class="bal-col">₹${balS}</td>
             <td>₹${d.Counter.cash}</td><td>₹${d.Counter.gpay}</td><td>₹${d.Counter.bank}</td><td class="bal-col">₹${balC}</td>
+            <td>₹${d['Counter 2'].cash}</td><td>₹${d['Counter 2'].gpay}</td><td>₹${d['Counter 2'].bank}</td><td class="bal-col">₹${balC2}</td>
           </tr>
         `;
       });
 
-      if (tableRows === '') tableRows = `<tr><td colspan="13" style="text-align:center; padding: 20px;">No data available for these dates.</td></tr>`;
+      if (tableRows === '') tableRows = `<tr><td colspan="17" style="text-align:center; padding: 20px;">No data available for these dates.</td></tr>`;
 
       tableHeader = `
         <tr>
@@ -116,16 +129,18 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
           <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Bakery</th>
           <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Stationery</th>
           <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Counter</th>
+          <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Counter 2</th>
         </tr>
         <tr>
-          <th>Cash</th><th>GPay</th><th>Bank</th><th>Balance</th>
-          <th>Cash</th><th>GPay</th><th>Bank</th><th>Balance</th>
-          <th>Cash</th><th>GPay</th><th>Bank</th><th>Balance</th>
+          <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
+          <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
+          <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
+          <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
         </tr>
       `;
 
-      const getCatSum = (cat, type) => dashboardStats[cat]?.[type] || 0;
-      const getCatBalance = (cat) => getCatSum(cat, 'gpay') - getCatSum(cat, 'bank');
+      const getCatSum = (cat: string, fieldType: string) => dashboardStats[cat]?.[fieldType] || 0;
+      const getCatBalance = (cat: string) => getCatSum(cat, 'gpay') - getCatSum(cat, 'bank');
       
       totalsHtml = `
         <div class="category-grid">
@@ -150,6 +165,13 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
             <p>Bank: <span>₹${getCatSum('Counter', 'bank')}</span></p>
             <p class="cat-balance">Bank Balance: <span>₹${getCatBalance('Counter')}</span></p>
           </div>
+          <div class="cat-card">
+            <h4>Counter 2 Totals</h4>
+            <p>Cash: <span>₹${getCatSum('Counter 2', 'cash')}</span></p>
+            <p>GPay: <span>₹${getCatSum('Counter 2', 'gpay')}</span></p>
+            <p>Bank: <span>₹${getCatSum('Counter 2', 'bank')}</span></p>
+            <p class="cat-balance">Bank Balance: <span>₹${getCatBalance('Counter 2')}</span></p>
+          </div>
         </div>
         
         <div class="totals-box">
@@ -162,9 +184,9 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
       `;
 
     } else {
-      const expensesByDate = {};
+      const expensesByDate: Record<string, any> = {};
       Object.keys(dashboardStats).forEach(cat => {
-        dashboardStats[cat].items.forEach(item => {
+        dashboardStats[cat].items.forEach((item: any) => {
           if (!expensesByDate[item.date]) {
             expensesByDate[item.date] = { categories: {}, dailyTotal: 0, rowCount: 0 };
           }
@@ -189,7 +211,7 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
         sortedCats.forEach(cat => {
           const catData = dayData.categories[cat];
           
-          catData.items.forEach((item, index) => {
+          catData.items.forEach((item: any, index: number) => {
             const dateCell = !dateMerged 
               ? `<td rowspan="${dayData.rowCount}" style="vertical-align: middle; font-weight: bold; text-align: center;">${getDisplayDate(date)}</td>` 
               : '';
@@ -268,12 +290,12 @@ export const handlePrintRange = async (type, fromDateStr, toDateStr, dashboardSt
             .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
             .header h1 { margin: 0; font-size: 24px; color: ${isIncome ? '#28a745' : '#dc3545'}; }
             .header p { margin: 5px 0 0 0; font-size: 14px; color: #666; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px; }
-            th, td { border: 1px solid #aaa; padding: 6px; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10px; } /* 🛡️ Made font slightly smaller to fit extra column */
+            th, td { border: 1px solid #aaa; padding: 4px; text-align: center; } /* 🛡️ Reduced padding so cells fit better */
             th { background-color: #f8f9fa; font-weight: bold; }
             .bal-col { color: #17a2b8; font-weight: bold; }
-            .category-grid { display: flex; justify-content: space-between; margin-bottom: 20px; page-break-inside: avoid; }
-            .cat-card { width: 30%; border: 1px solid #ccc; border-radius: 5px; padding: 10px; background-color: #fff; }
+            .category-grid { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 20px; page-break-inside: avoid; } /* 🛡️ Added flex-wrap */
+            .cat-card { width: 48%; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; padding: 10px; background-color: #fff; box-sizing: border-box; } /* 🛡️ Changed width to 48% */
             .cat-card h4 { margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; color: #28a745; text-align: center; }
             .cat-card p { display: flex; justify-content: space-between; margin: 5px 0; font-size: 14px; font-weight: bold; }
             .cat-balance { color: #17a2b8; border-top: 1px dashed #ccc; padding-top: 5px; margin-top: 5px !important; }

@@ -1,13 +1,14 @@
+import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Alert, TouchableOpacity } from 'react-native';
-import * as SQLite from 'expo-sqlite'; // 🛡️ Added this import
+import * as SQLite from 'expo-sqlite';
 import { SQLiteProvider } from 'expo-sqlite';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system/legacy'; 
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 
-const initializeDatabase = async (db) => {
+const initializeDatabase = async (db: SQLite.SQLiteDatabase) => {
   try {
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
@@ -26,18 +27,24 @@ const initializeDatabase = async (db) => {
 };
 
 export default function RootLayout() {
+  // 🛡️ THE FIX: State to force a database reload
+  const [dbVersion, setDbVersion] = useState(0);
   
-  const exportDb = async () => {
+const exportDb = async () => {
     try {
-      // 🛡️ FIX 1: Force the database to flush all recent changes into the main .db file
       const db = await SQLite.openDatabaseAsync('canteen.db');
+      // This checkpoint flushes the WAL file, which confuses the main app connection!
       await db.execAsync('PRAGMA wal_checkpoint(FULL);');
 
       const dbFilePath = `${FileSystem.documentDirectory}SQLite/canteen.db`;
       const dbInfo = await FileSystem.getInfoAsync(dbFilePath);
-      
+    
       if (dbInfo.exists) {
         await Sharing.shareAsync(dbFilePath, { dialogTitle: 'Export Canteen Database' });
+        
+        // 🛡️ THE FIX FOR EXPORT: Reboot the UI's database connection so it doesn't crash on the next save!
+        setDbVersion(prev => prev + 1);
+        
       } else {
         Alert.alert("Error", "Database file not found.");
       }
@@ -45,6 +52,7 @@ export default function RootLayout() {
       Alert.alert("Export Error", String(err));
     }
   };
+
 
   const importDb = async () => {
     try {
@@ -59,18 +67,19 @@ export default function RootLayout() {
           await FileSystem.makeDirectoryAsync(sqliteDir);
         }
 
-        // 🛡️ FIX 2: Delete the old DB and its "ghost" WAL files so they don't corrupt the import
         if ((await FileSystem.getInfoAsync(dbFilePath)).exists) await FileSystem.deleteAsync(dbFilePath);
         if ((await FileSystem.getInfoAsync(walFilePath)).exists) await FileSystem.deleteAsync(walFilePath);
         if ((await FileSystem.getInfoAsync(shmFilePath)).exists) await FileSystem.deleteAsync(shmFilePath);
 
-        // Copy the new DB file
         await FileSystem.copyAsync({ from: result.assets[0].uri, to: dbFilePath });
         
+        // 🛡️ THE FIX: Incrementing this state destroys the old DB connection and mounts a fresh one!
+        setDbVersion(prev => prev + 1);
+
         Alert.alert(
           "Success! 🎉", 
-          "Database imported successfully.\n\n⚠️ IMPORTANT: You MUST completely close (swipe away) the app and reopen it to load the new data.",
-          [{ text: "Got it!" }]
+          "Database imported successfully! The data has been automatically refreshed.",
+          [{ text: "Awesome!" }]
         );
       }
     } catch (error) {
@@ -91,7 +100,8 @@ export default function RootLayout() {
   };
 
   return (
-    <SQLiteProvider databaseName="canteen.db" onInit={initializeDatabase}>
+    // 🛡️ THE FIX: Attach the dbVersion state to the 'key' prop
+    <SQLiteProvider key={dbVersion} databaseName="canteen.db" onInit={initializeDatabase}>
       <Tabs screenOptions={{ 
         headerStyle: { backgroundColor: '#f8f9fa' },
         headerTitleStyle: { fontWeight: 'bold', fontSize: 20 },
@@ -108,7 +118,7 @@ export default function RootLayout() {
           options={{ 
             title: 'Inward', 
             tabBarLabel: 'Inward',
-            tabBarIcon: ({ color, size }) => <Ionicons name="download-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name="download-outline" size={size} color={color} />
           }} 
         />
         <Tabs.Screen 
@@ -116,7 +126,7 @@ export default function RootLayout() {
           options={{ 
             title: 'Outward', 
             tabBarLabel: 'Outward',
-            tabBarIcon: ({ color, size }) => <Ionicons name="upload-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name="cloud-upload-outline" size={size} color={color} />
           }} 
         />
         <Tabs.Screen
@@ -124,7 +134,7 @@ export default function RootLayout() {
           options={{ 
             title: 'Inward Report', 
             tabBarLabel: 'Inward Rep',
-            tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name="bar-chart-outline" size={size} color={color} />
           }} 
         />
         <Tabs.Screen 
@@ -132,7 +142,7 @@ export default function RootLayout() {
           options={{ 
             title: 'Outward Report', 
             tabBarLabel: 'Outward Rep',
-            tabBarIcon: ({ color, size }) => <Ionicons name="receipt-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name="receipt-outline" size={size} color={color} />
           }} 
         />
       </Tabs>

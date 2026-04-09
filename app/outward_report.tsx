@@ -4,6 +4,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+// @ts-ignore
 import { formatDate, getDisplayDate, handlePrintRange } from '../utils/actions';
 
 export default function OutwardReportScreen() {
@@ -13,23 +14,24 @@ export default function OutwardReportScreen() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
 
-  const [reportData, setReportData] = useState({});
-  const [catSummaries, setCatSummaries] = useState({});
+  const [reportData, setReportData] = useState<Record<string, any>>({});
+  const [catSummaries, setCatSummaries] = useState<Record<string, number>>({});
   const [grandTotal, setGrandTotal] = useState(0);
-  const [dashboardStatsRaw, setDashboardStatsRaw] = useState({});
+  const [dashboardStatsRaw, setDashboardStatsRaw] = useState<Record<string, any>>({});
 
   const loadReport = useCallback(async () => {
     const fromStr = formatDate(fromDate);
     const toStr = formatDate(toDate);
-    const rawResults = await db.getAllAsync(
+    
+    const rawResults = await db.getAllAsync<any>(
       'SELECT date, category, item_name, amount FROM expenses WHERE date >= ? AND date <= ? ORDER BY date ASC, category ASC',
-      fromStr, toStr
+      fromStr || '', toStr || ''
     );
 
     let total = 0;
-    const expensesByDate = {};
-    const summary = {};
-    const rawStats = {};
+    const expensesByDate: Record<string, any> = {};
+    const summary: Record<string, number> = {};
+    const rawStats: Record<string, any> = {};
 
     rawResults.forEach(row => {
       total += row.amount;
@@ -63,7 +65,6 @@ export default function OutwardReportScreen() {
           <Text style={styles.dateLabel}>From: {getDisplayDate(formatDate(fromDate))}</Text>
         </TouchableOpacity>
 
-        {/* 🛡️ PRINT ICON PLACED IN THE MIDDLE */}
         <TouchableOpacity 
           style={styles.printBtn} 
           onPress={() => handlePrintRange('expenses', formatDate(fromDate), formatDate(toDate), dashboardStatsRaw, grandTotal)}
@@ -76,8 +77,8 @@ export default function OutwardReportScreen() {
         </TouchableOpacity>
       </View>
 
-      {showFromPicker && <DateTimePicker value={fromDate} onChange={(e, d) => {setShowFromPicker(false); if(d) setFromDate(d);}} />}
-      {showToPicker && <DateTimePicker value={toDate} onChange={(e, d) => {setShowToPicker(false); if(d) setToDate(d);}} />}
+      {showFromPicker && <DateTimePicker value={fromDate} onChange={(e: any, d?: Date) => {setShowFromPicker(false); if(d) setFromDate(d);}} />}
+      {showToPicker && <DateTimePicker value={toDate} onChange={(e: any, d?: Date) => {setShowToPicker(false); if(d) setToDate(d);}} />}
 
       <ScrollView>
         <View style={styles.tableHeader}>
@@ -102,7 +103,7 @@ export default function OutwardReportScreen() {
                       <View key={cat} style={styles.categoryRowWrapper}>
                         <View style={styles.catMergeCell}><Text style={styles.catMergeText}>{cat}</Text></View>
                         <View style={{ flex: 1 }}>
-                          {catData.items.map((item, idx) => (
+                          {catData.items.map((item: any, idx: number) => (
                             <View key={idx} style={styles.itemRow}>
                               <Text style={[styles.rText, {flex: 1, textAlign: 'left', paddingLeft: 5}]}>{item.item_name}</Text>
                               <Text style={[styles.rText, {width: 55}]}>₹{item.amount}</Text>

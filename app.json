@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "canteen-ledger",
+    "name": "DS",
     "slug": "canteen-ledger",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,12 +14,11 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.the_aakash_t.canteenledger"
     },
     "web": {
       "output": "static",
@@ -45,6 +44,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c7405f40-1c34-4c39-94f3-6c611b9d1394"
+      }
     }
   }
 }
