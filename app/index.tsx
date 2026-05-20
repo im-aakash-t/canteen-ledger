@@ -7,13 +7,14 @@ import { Ionicons } from '@expo/vector-icons';
 // @ts-ignore
 import { formatDate, getDisplayDate, handleDeleteRange, handlePrintRange } from '../utils/actions';
 
-// 🛡️ UPDATED: Added Counter 2
-const categories = ['Bakery', 'Stationery', 'Counter', 'Counter 2'];
+// 🛡️ UPDATED: Added Counter 3
+const categories = ['Bakery', 'Stationery', 'Counter', 'Counter 2', 'Counter 3'];
 const defaultState: Record<string, any> = {
   Bakery: { cash: '', gpay: '', bank_withdrawn: '' },
   Stationery: { cash: '', gpay: '', bank_withdrawn: '' },
   Counter: { cash: '', gpay: '', bank_withdrawn: '' },
-  'Counter 2': { cash: '', gpay: '', bank_withdrawn: '' }
+  'Counter 2': { cash: '', gpay: '', bank_withdrawn: '' },
+  'Counter 3': { cash: '', gpay: '', bank_withdrawn: '' }
 };
 
 export default function IncomingScreen() {
@@ -29,7 +30,7 @@ export default function IncomingScreen() {
   const toDateStr = formatDate(toDate);
   const isSingleDate = fromDateStr === toDateStr;
 
-  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({ Bakery: false, Stationery: false, Counter: false, 'Counter 2': false });
+  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({ Bakery: false, Stationery: false, Counter: false, 'Counter 2': false, 'Counter 3': false });
   const toggleExpand = (cat: string) => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
 
   const [grandTotals, setGrandTotals] = useState({ cash: 0, gpay: 0, bank: 0 });
@@ -43,12 +44,13 @@ export default function IncomingScreen() {
       );
 
       let gCash = 0, gGpay = 0, gBank = 0;
-      // 🛡️ UPDATED: Added Counter 2 to summary
+      // 🛡️ UPDATED: Added Counter 3 to summary
       const summary: Record<string, any> = {
         Bakery: { cash: 0, gpay: 0, bank: 0, items: [] },
         Stationery: { cash: 0, gpay: 0, bank: 0, items: [] },
         Counter: { cash: 0, gpay: 0, bank: 0, items: [] },
-        'Counter 2': { cash: 0, gpay: 0, bank: 0, items: [] }
+        'Counter 2': { cash: 0, gpay: 0, bank: 0, items: [] },
+        'Counter 3': { cash: 0, gpay: 0, bank: 0, items: [] }
       };
 
       rawResults.forEach(row => {
@@ -218,7 +220,7 @@ export default function IncomingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5', padding: 15 },
   dashboard: { backgroundColor: '#343a40', padding: 15, borderRadius: 10, marginBottom: 20 },
-  dateFilterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 15, alignItems: 'center' as any },
+  dateFilterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   dateBox: { flex: 1, marginHorizontal: 5 },
   dateLabel: { color: '#adb5bd', fontSize: 12, marginBottom: 5 },
   datePickerBtn: { backgroundColor: '#495057', borderRadius: 5, padding: 10, alignItems: 'center' },

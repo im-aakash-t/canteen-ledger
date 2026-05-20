@@ -29,23 +29,23 @@ export default function InwardReportScreen() {
     );
 
     const datesMap: Record<string, any> = {};
-    // 🛡️ UPDATED: Added Counter 2
     const summary: Record<string, any> = { 
       Bakery: {cash:0, gpay:0, bank:0, items:[]}, 
       Stationery: {cash:0, gpay:0, bank:0, items:[]}, 
       Counter: {cash:0, gpay:0, bank:0, items:[]},
-      'Counter 2': {cash:0, gpay:0, bank:0, items:[]}
+      'Counter 2': {cash:0, gpay:0, bank:0, items:[]},
+      'Counter 3': {cash:0, gpay:0, bank:0, items:[]}
     };
     let gC = 0, gG = 0, gB = 0;
 
     rawResults.forEach(row => {
       if (!datesMap[row.date]) {
-        // 🛡️ UPDATED: Added Counter 2
         datesMap[row.date] = { 
           Bakery: {c:0, g:0, b:0}, 
           Stationery: {c:0, g:0, b:0}, 
           Counter: {c:0, g:0, b:0},
-          'Counter 2': {c:0, g:0, b:0}
+          'Counter 2': {c:0, g:0, b:0},
+          'Counter 3': {c:0, g:0, b:0}
         };
       }
       if (summary[row.category]) {
@@ -92,8 +92,7 @@ export default function InwardReportScreen() {
         <ScrollView style={{ flex: 1 }}>
           <View style={styles.tableRow}>
             <View style={[styles.cell, styles.headerCell, {width: 90}]}><Text style={styles.headerText}>Date</Text></View>
-            {/* 🛡️ UPDATED: Added Counter 2 to mapping */}
-            {['Bakery', 'Stationery', 'Counter', 'Counter 2'].map(c => (
+            {['Bakery', 'Stationery', 'Counter', 'Counter 2', 'Counter 3'].map(c => (
               <View key={c} style={[styles.cell, styles.headerCell, {width: 180, backgroundColor: '#e2e3e5'}]}>
                 <Text style={styles.headerText}>{c}</Text>
               </View>
@@ -101,8 +100,7 @@ export default function InwardReportScreen() {
           </View>
           <View style={styles.tableRow}>
             <View style={[styles.cell, {width: 90, borderBottomWidth: 2}]} />
-            {/* 🛡️ UPDATED: 4 iterations now instead of 3 */}
-            {[1,2,3,4].map(i => (
+            {[1,2,3,4,5].map(i => (
               <React.Fragment key={i}>
                 <View style={[styles.cell, {width: 45, borderBottomWidth: 2}]}><Text style={styles.subHeaderText}>Cash</Text></View>
                 <View style={[styles.cell, {width: 45, borderBottomWidth: 2}]}><Text style={styles.subHeaderText}>GPay</Text></View>
@@ -112,26 +110,47 @@ export default function InwardReportScreen() {
             ))}
           </View>
 
-          {data.map((item, idx) => (
-            <View key={idx} style={styles.tableRow}>
-              <View style={[styles.cell, {width: 90}]}><Text style={styles.cellText}>{getDisplayDate(item.date)}</Text></View>
-              {/* 🛡️ UPDATED: Added Counter 2 */}
-              {['Bakery', 'Stationery', 'Counter', 'Counter 2'].map(c => (
-                <React.Fragment key={c}>
-                  <View style={[styles.cell, {width: 45}]}><Text style={styles.cellText}>{item.vals[c].c}</Text></View>
-                  <View style={[styles.cell, {width: 45}]}><Text style={styles.cellText}>{item.vals[c].g}</Text></View>
-                  <View style={[styles.cell, {width: 45}]}><Text style={styles.cellText}>{item.vals[c].b}</Text></View>
-                  <View style={[styles.cell, {width: 45}]}><Text style={[styles.cellText, {color: '#17a2b8', fontWeight: 'bold'}]}>{item.vals[c].g - item.vals[c].b}</Text></View>
-                </React.Fragment>
-              ))}
-            </View>
-          ))}
+          {data.map((item, idx) => {
+            let dayTotalCash = 0;
+            let dayTotalGpay = 0;
+            let dayTotalBank = 0;
+            
+            ['Bakery', 'Stationery', 'Counter', 'Counter 2', 'Counter 3'].forEach(c => {
+               dayTotalCash += item.vals[c].c;
+               dayTotalGpay += item.vals[c].g;
+               dayTotalBank += item.vals[c].b;
+            });
+
+            return (
+              <React.Fragment key={idx}>
+                <View style={styles.tableRow}>
+                  <View style={[styles.cell, {width: 90}]}><Text style={styles.cellText}>{getDisplayDate(item.date)}</Text></View>
+                  {['Bakery', 'Stationery', 'Counter', 'Counter 2', 'Counter 3'].map(c => (
+                    <React.Fragment key={c}>
+                      <View style={[styles.cell, {width: 45}]}><Text style={styles.cellText}>{item.vals[c].c}</Text></View>
+                      <View style={[styles.cell, {width: 45}]}><Text style={styles.cellText}>{item.vals[c].g}</Text></View>
+                      <View style={[styles.cell, {width: 45}]}><Text style={styles.cellText}>{item.vals[c].b}</Text></View>
+                      <View style={[styles.cell, {width: 45}]}><Text style={[styles.cellText, {color: '#17a2b8', fontWeight: 'bold'}]}>{item.vals[c].g - item.vals[c].b}</Text></View>
+                    </React.Fragment>
+                  ))}
+                </View>
+                <View style={[styles.tableRow, { backgroundColor: '#fff5f5' }]}>
+                  <View style={[styles.cell, {width: 90}]}><Text style={[styles.cellText, {fontWeight: 'bold', color: '#dc3545'}]}>Day Total</Text></View>
+                  <View style={[styles.cell, {width: 900, flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 5}]}>
+                    <Text style={[styles.cellText, {fontWeight: 'bold', color: '#dc3545', fontSize: 11.5}]}>Cash: ₹{dayTotalCash}</Text>
+                    <Text style={[styles.cellText, {fontWeight: 'bold', color: '#dc3545', fontSize: 11.5}]}>GPay: ₹{dayTotalGpay}</Text>
+                    <Text style={[styles.cellText, {fontWeight: 'bold', color: '#dc3545', fontSize: 11.5}]}>Bank: ₹{dayTotalBank}</Text>
+                    <Text style={[styles.cellText, {fontWeight: 'bold', color: '#17a2b8', fontSize: 11.5}]}>Bal: ₹{dayTotalGpay - dayTotalBank}</Text>
+                  </View>
+                </View>
+              </React.Fragment>
+            );
+          })}
 
           <View style={styles.reportFooter}>
-            <Text style={styles.summaryTitle}>Category Summaries</Text>
+            <Text style={styles.summaryTitle}>Category Summaries & Grand Totals</Text>
             <View style={styles.catGrid}>
-              {/* 🛡️ UPDATED: Added Counter 2 */}
-              {['Bakery', 'Stationery', 'Counter', 'Counter 2'].map(c => (
+              {['Bakery', 'Stationery', 'Counter', 'Counter 2', 'Counter 3'].map(c => (
                 <View key={c} style={styles.catCard}>
                   <Text style={styles.catName}>{c}</Text>
                   <Text style={styles.catText}>Cash: ₹{catTotals[c]?.cash || 0}</Text>
@@ -140,16 +159,17 @@ export default function InwardReportScreen() {
                   <Text style={[styles.catText, {color: '#17a2b8', marginTop: 3, borderTopWidth: 0.5, borderColor: '#eee'}]}>Bal: ₹{(catTotals[c]?.gpay || 0) - (catTotals[c]?.bank || 0)}</Text>
                 </View>
               ))}
-            </View>
 
-            <View style={styles.grandTotalsBox}>
-              <Text style={styles.gtTitle}>Overall Grand Totals</Text>
-              <View style={styles.gtRow}><Text style={styles.gtLabel}>Total Cash:</Text><Text style={styles.gtValue}>₹{grandTotals.cash}</Text></View>
-              <View style={styles.gtRow}><Text style={styles.gtLabel}>Total GPay:</Text><Text style={styles.gtValue}>₹{grandTotals.gpay}</Text></View>
-              <View style={styles.gtRow}><Text style={styles.gtLabel}>Total Bank Withdrawn:</Text><Text style={styles.gtValue}>₹{grandTotals.bank}</Text></View>
-              <View style={styles.gtBalanceRow}>
-                <Text style={styles.gtBalanceLabel}>Overall Bank Balance:</Text>
-                <Text style={styles.gtBalanceValue}>₹{grandTotals.gpay - grandTotals.bank}</Text>
+              {/* 🛡️ THE FIX: Moved inside the catGrid row wrapper to form a clean 3x2 uniform block layout */}
+              <View style={styles.grandTotalsCard}>
+                <Text style={styles.gtTitle}>Overall Grand Totals</Text>
+                <View style={styles.gtRow}><Text style={styles.gtLabel}>Total Cash:</Text><Text style={styles.gtValue}>₹{grandTotals.cash}</Text></View>
+                <View style={styles.gtRow}><Text style={styles.gtLabel}>Total GPay:</Text><Text style={styles.gtValue}>₹{grandTotals.gpay}</Text></View>
+                <View style={styles.gtRow}><Text style={styles.gtLabel}>Total Bank:</Text><Text style={styles.gtValue}>₹{grandTotals.bank}</Text></View>
+                <View style={styles.gtBalanceRow}>
+                  <Text style={styles.gtBalanceLabel}>Bank Balance:</Text>
+                  <Text style={styles.gtBalanceValue}>₹{grandTotals.gpay - grandTotals.bank}</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -171,18 +191,21 @@ const styles = StyleSheet.create({
   headerText: { fontWeight: 'bold', fontSize: 13 },
   subHeaderText: { fontSize: 10, fontWeight: 'bold', color: '#666' },
   cellText: { fontSize: 10.5 },
-  reportFooter: { marginTop: 20, padding: 10, backgroundColor: '#f8f9fa', borderRadius: 10, width: 800 }, // 🛡️ Made footer wider to match scroll view
-  summaryTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
-  catGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 15 }, // 🛡️ Added wrapping so 4 items fit nicely
-  catCard: { width: '48%', marginBottom: 10, padding: 8, backgroundColor: '#fff', borderRadius: 5, borderWidth: 1, borderColor: '#ddd' }, // 🛡️ Made items 48% width to stack 2x2
+  reportFooter: { marginTop: 20, padding: 15, backgroundColor: '#f8f9fa', borderRadius: 10, width: 980 }, 
+  summaryTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: '#333' },
+  // 🛡️ Changed system to a clean row wrap configuration using exactly 32% width blocks to create 3 perfect columns
+  catGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  catCard: { width: '32%', marginBottom: 12, padding: 10, backgroundColor: '#fff', borderRadius: 6, borderWidth: 1, borderColor: '#ddd' }, 
   catName: { fontWeight: 'bold', fontSize: 13, color: '#28a745', borderBottomWidth: 1, borderColor: '#eee', marginBottom: 5 },
-  catText: { fontSize: 11.5, fontWeight: 'bold', marginVertical: 1 },
-  grandTotalsBox: { padding: 12, backgroundColor: '#fff', borderRadius: 8, borderWidth: 2, borderColor: '#333' },
-  gtTitle: { fontSize: 15, fontWeight: 'bold', borderBottomWidth: 1, paddingBottom: 5, marginBottom: 8, textAlign: 'center' },
-  gtRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  gtLabel: { fontSize: 13, color: '#555' },
-  gtValue: { fontSize: 13, fontWeight: 'bold' },
-  gtBalanceRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#eee', marginTop: 8, paddingTop: 8 },
-  gtBalanceLabel: { fontSize: 14, fontWeight: 'bold', color: '#17a2b8' },
-  gtBalanceValue: { fontSize: 15, fontWeight: 'bold', color: '#17a2b8' }
+  catText: { fontSize: 11.5, fontWeight: 'bold', marginVertical: 2 },
+  
+  // 🛡️ Added specific styling to matching uniform proportions for Grand Totals Card
+  grandTotalsCard: { width: '32%', marginBottom: 12, padding: 10, backgroundColor: '#fff', borderRadius: 6, borderWidth: 2, borderColor: '#333' },
+  gtTitle: { fontSize: 13, fontWeight: 'bold', borderBottomWidth: 1, borderColor: '#333', paddingBottom: 5, marginBottom: 5, textAlign: 'center', color: '#333' },
+  gtRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
+  gtLabel: { fontSize: 11.5, color: '#555', fontWeight: '500' },
+  gtValue: { fontSize: 11.5, fontWeight: 'bold' },
+  gtBalanceRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#333', marginTop: 4, paddingTop: 4 },
+  gtBalanceLabel: { fontSize: 12, fontWeight: 'bold', color: '#17a2b8' },
+  gtBalanceValue: { fontSize: 12, fontWeight: 'bold', color: '#17a2b8' }
 });

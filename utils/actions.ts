@@ -87,12 +87,12 @@ export const handlePrintRange = async (
       Object.keys(dashboardStats).forEach(cat => {
         dashboardStats[cat].items.forEach((item: any) => {
           if (!datesMap[item.date]) {
-            // 🛡️ UPDATED: Added Counter 2
             datesMap[item.date] = {
               Bakery: { cash: 0, gpay: 0, bank: 0 },
               Stationery: { cash: 0, gpay: 0, bank: 0 },
               Counter: { cash: 0, gpay: 0, bank: 0 },
-              'Counter 2': { cash: 0, gpay: 0, bank: 0 }
+              'Counter 2': { cash: 0, gpay: 0, bank: 0 },
+              'Counter 3': { cash: 0, gpay: 0, bank: 0 }
             };
           }
           datesMap[item.date][cat].cash += item.cash || 0;
@@ -108,7 +108,18 @@ export const handlePrintRange = async (
         const balB = d.Bakery.gpay - d.Bakery.bank;
         const balS = d.Stationery.gpay - d.Stationery.bank;
         const balC = d.Counter.gpay - d.Counter.bank;
-        const balC2 = d['Counter 2'].gpay - d['Counter 2'].bank; // 🛡️ New calc
+        const balC2 = d['Counter 2'].gpay - d['Counter 2'].bank;
+        const balC3 = d['Counter 3'].gpay - d['Counter 3'].bank;
+
+        let dayTotalCash = 0;
+        let dayTotalGpay = 0;
+        let dayTotalBank = 0;
+        ['Bakery', 'Stationery', 'Counter', 'Counter 2', 'Counter 3'].forEach(c => {
+           dayTotalCash += d[c].cash;
+           dayTotalGpay += d[c].gpay;
+           dayTotalBank += d[c].bank;
+        });
+        const dayTotalBal = dayTotalGpay - dayTotalBank;
 
         tableRows += `
           <tr>
@@ -117,11 +128,19 @@ export const handlePrintRange = async (
             <td>₹${d.Stationery.cash}</td><td>₹${d.Stationery.gpay}</td><td>₹${d.Stationery.bank}</td><td class="bal-col">₹${balS}</td>
             <td>₹${d.Counter.cash}</td><td>₹${d.Counter.gpay}</td><td>₹${d.Counter.bank}</td><td class="bal-col">₹${balC}</td>
             <td>₹${d['Counter 2'].cash}</td><td>₹${d['Counter 2'].gpay}</td><td>₹${d['Counter 2'].bank}</td><td class="bal-col">₹${balC2}</td>
+            <td>₹${d['Counter 3'].cash}</td><td>₹${d['Counter 3'].gpay}</td><td>₹${d['Counter 3'].bank}</td><td class="bal-col">₹${balC3}</td>
+          </tr>
+          <tr style="background-color: #fff5f5; font-weight: bold; border-top: 2px solid #ccc; border-bottom: 2px solid #ccc;">
+            <td colspan="5" style="color: #dc3545; text-align: right; padding-right: 15px;">Day Total:</td>
+            <td colspan="4" style="color: #dc3545; text-align: center;">Cash: ₹${dayTotalCash}</td>
+            <td colspan="4" style="color: #dc3545; text-align: center;">GPay: ₹${dayTotalGpay}</td>
+            <td colspan="4" style="color: #dc3545; text-align: center;">Bank: ₹${dayTotalBank}</td>
+            <td colspan="4" style="color: #17a2b8; text-align: center;">Bal: ₹${dayTotalBal}</td>
           </tr>
         `;
       });
 
-      if (tableRows === '') tableRows = `<tr><td colspan="17" style="text-align:center; padding: 20px;">No data available for these dates.</td></tr>`;
+      if (tableRows === '') tableRows = `<tr><td colspan="21" style="text-align:center; padding: 20px;">No data available for these dates.</td></tr>`;
 
       tableHeader = `
         <tr>
@@ -130,8 +149,10 @@ export const handlePrintRange = async (
           <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Stationery</th>
           <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Counter</th>
           <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Counter 2</th>
+          <th colspan="4" style="text-align:center; background-color:#e2e3e5;">Counter 3</th>
         </tr>
         <tr>
+          <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
           <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
           <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
           <th>Cash</th><th>GPay</th><th>Bank</th><th>Bal</th>
@@ -172,14 +193,21 @@ export const handlePrintRange = async (
             <p>Bank: <span>₹${getCatSum('Counter 2', 'bank')}</span></p>
             <p class="cat-balance">Bank Balance: <span>₹${getCatBalance('Counter 2')}</span></p>
           </div>
-        </div>
-        
-        <div class="totals-box">
-          <h3>Overall Grand Totals</h3>
-          <div class="total-row"><span>Total Cash:</span> <span class="bold">₹${totals.cash}</span></div>
-          <div class="total-row"><span>Total GPay:</span> <span class="bold">₹${totals.gpay}</span></div>
-          <div class="total-row"><span>Total Bank Withdrawn:</span> <span class="bold">₹${totals.bank}</span></div>
-          <div class="total-row highlight"><span>Overall Bank Balance:</span> <span>₹${totals.gpay - totals.bank}</span></div>
+          <div class="cat-card">
+            <h4>Counter 3 Totals</h4>
+            <p>Cash: <span>₹${getCatSum('Counter 3', 'cash')}</span></p>
+            <p>GPay: <span>₹${getCatSum('Counter 3', 'gpay')}</span></p>
+            <p>Bank: <span>₹${getCatSum('Counter 3', 'bank')}</span></p>
+            <p class="cat-balance">Bank Balance: <span>₹${getCatBalance('Counter 3')}</span></p>
+          </div>
+          
+          <div class="totals-box-card">
+            <h3>Overall Grand Totals</h3>
+            <p>Total Cash: <span class="bold">₹${totals.cash}</span></p>
+            <p>Total GPay: <span class="bold">₹${totals.gpay}</span></p>
+            <p>Total Bank: <span class="bold">₹${totals.bank}</span></p>
+            <p class="grand-balance">Overall Bank Bal: <span class="bold">₹${totals.gpay - totals.bank}</span></p>
+          </div>
         </div>
       `;
 
@@ -286,25 +314,61 @@ export const handlePrintRange = async (
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
           <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 15px; color: #333; }
-            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            @page { size: landscape; margin: 8mm; }
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 5px; color: #333; }
+            .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 8px; }
             .header h1 { margin: 0; font-size: 24px; color: ${isIncome ? '#28a745' : '#dc3545'}; }
             .header p { margin: 5px 0 0 0; font-size: 14px; color: #666; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10px; } /* 🛡️ Made font slightly smaller to fit extra column */
-            th, td { border: 1px solid #aaa; padding: 4px; text-align: center; } /* 🛡️ Reduced padding so cells fit better */
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px; } 
+            th, td { border: 1px solid #aaa; padding: 4px; text-align: center; } 
             th { background-color: #f8f9fa; font-weight: bold; }
             .bal-col { color: #17a2b8; font-weight: bold; }
-            .category-grid { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 20px; page-break-inside: avoid; } /* 🛡️ Added flex-wrap */
-            .cat-card { width: 48%; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; padding: 10px; background-color: #fff; box-sizing: border-box; } /* 🛡️ Changed width to 48% */
+            
+            .category-grid { 
+              display: grid; 
+              grid-template-columns: repeat(3, 1fr); 
+              gap: 12px; 
+              margin-bottom: 15px; 
+              break-inside: avoid; 
+              page-break-inside: avoid; 
+            }
+            .cat-card { 
+              border: 1px solid #ccc; 
+              border-radius: 5px; 
+              padding: 10px; 
+              background-color: #fff; 
+              box-sizing: border-box; 
+            } 
             .cat-card h4 { margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; color: #28a745; text-align: center; }
-            .cat-card p { display: flex; justify-content: space-between; margin: 5px 0; font-size: 14px; font-weight: bold; }
+            .cat-card p { display: flex; justify-content: space-between; margin: 5px 0; font-size: 13px; font-weight: bold; }
             .cat-balance { color: #17a2b8; border-top: 1px dashed #ccc; padding-top: 5px; margin-top: 5px !important; }
-            .totals-box { border: 2px solid #333; padding: 15px; background-color: #f8f9fa; border-radius: 5px; page-break-inside: avoid; }
-            .totals-box h3 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 5px; }
-            .total-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 8px; }
+            
+            /* Styles for Grand Totals Card inside Grid */
+            .totals-box-card {
+              border: 2px solid #333;
+              border-radius: 5px;
+              padding: 10px;
+              background-color: #f8f9fa;
+              box-sizing: border-box;
+            }
+            .totals-box-card h3 { margin: 0 0 10px 0; border-bottom: 2px solid #333; padding-bottom: 5px; color: #333; text-align: center; font-size: 14px; }
+            .totals-box-card p { display: flex; justify-content: space-between; margin: 5px 0; font-size: 13px; font-weight: bold; }
+            .grand-balance { color: #17a2b8; border-top: 1px solid #333; padding-top: 5px; margin-top: 5px !important; }
+
+            /* Styles for Expense Box Banner */
+            .totals-box { 
+              border: 2px solid #333; 
+              padding: 15px; 
+              background-color: #f8f9fa; 
+              border-radius: 5px; 
+              break-inside: avoid; 
+              page-break-inside: avoid; 
+            }
+            .totals-box h3 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 5px; font-size: 16px; }
+            .total-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 6px; }
             .bold { font-weight: bold; }
-            .highlight { color: #17a2b8; font-weight: bold; font-size: 18px; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 8px; }
-            .expense-total { color: #dc3545; font-size: 18px; font-weight: bold; }
+            .highlight { color: #17a2b8; font-weight: bold; font-size: 17px; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 8px; }
+            .expense-total { color: #dc3545; font-size: 17px; font-weight: bold; }
           </style>
         </head>
         <body>
