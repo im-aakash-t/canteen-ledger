@@ -1,50 +1,77 @@
-# Welcome to your Expo app 👋
+# Canteen Financial Ledger System
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A custom mobile application developed for a canteen business to manage daily income, expenses, bank withdrawals, and financial reporting in a simple offline-first environment.
 
-## Get started
+## Overview
 
-1. Install dependencies
+The Canteen Financial Ledger System was built to replace manual financial record keeping and streamline daily canteen operations. The application enables administrators to record transactions, monitor cash flow, generate reports, and maintain financial records efficiently from a mobile device.
 
-   ```bash
-   npm install
-   ```
+## Features
 
-2. Start the app
+### Income Management
 
-   ```bash
-   npx expo start
-   ```
+* Record daily cash collections
+* Record GPay and digital payment collections
+* Track bank withdrawals
+* Support multiple sales counters
+* View category-wise income summaries
 
-In the output, you'll find options to open the app in a
+### Expense Management
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+* Record daily expenses
+* Organize expenses by category
+* Create custom expense categories
+* Maintain detailed transaction records
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Reporting & Analytics
 
-## Get a fresh project
+* Generate inward financial reports
+* Generate outward financial reports
+* View date-wise transaction history
+* View category-wise summaries
+* Monitor daily and overall financial totals
+* Track bank balance calculations
 
-When you're ready, run:
+### Data Management
 
-```bash
-npm run reset-project
-```
+* SQLite local database storage
+* Database backup and restore functionality
+* Offline-first operation
+* Secure local data management
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Business Impact
 
-## Learn more
+* Replaced manual financial record keeping
+* Simplified daily income and expense tracking
+* Reduced reporting effort through automated calculations
+* Improved accuracy of financial records
+* Enabled quick access to historical financial data
+* Operates without requiring an internet connection
 
-To learn more about developing your project with Expo, look at the following resources:
+## Tech Stack
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Frontend
 
-## Join the community
+* React Native
+* Expo
+* TypeScript
 
-Join our community of developers creating universal apps.
+### Database
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+* SQLite
+
+### Navigation
+
+* Expo Router
+
+## Status
+
+✅ Deployed and actively used by the client for daily canteen financial operations.
+
+## Author
+
+**Aakash T**
+
+Product Engineer | Web & App Builder
+
+GitHub: github.com/im-aakash-t
